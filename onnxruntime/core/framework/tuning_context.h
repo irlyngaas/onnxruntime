@@ -25,6 +25,9 @@ class ITuningContext {
 
   virtual TuningResultsManager& GetTuningResultsManager() = 0;
   virtual const TuningResultsManager& GetTuningResultsManager() const = 0;
+
+  // For validating tuning results .
+  virtual const TuningResultsValidator& GetTuningResultsValidator() const = 0;
 };
 
 class TuningResultsManager {
@@ -48,6 +51,33 @@ class TuningResultsManager {
  private:
   mutable OrtMutex lock_;
   std::unordered_map<std::string, KernelMap> results_;
+};
+
+class TuningResultsValidator {
+ public:
+  using CheckFunc = std::function<Status(const std::string&)>;
+  using WriteFunc = std::function<std::string()>;
+  using CheckWriteFuncs = std::unordered_map<std::string, std::pair<CheckFunc, WriteFunc>>;
+
+  TuningResultsValidator();
+
+  Status CheckAll(const std::unordered_map<std::string, std::string>& to_check) const;
+  std::unordered_map<std::string, std::string> WriteAll() const;
+
+ protected:
+  void RegisterValidator(const std::string& key, const CheckFunc& cf, const WriteFunc& wf);
+
+  virtual Status CheckOrtVersion(const std::string& value) const;
+  virtual std::string WriteOrtVersion() const;
+
+  virtual Status CheckOrtGitCommit(const std::string& value) const;
+  virtual std::string WriteOrtGitCommit() const;
+
+  virtual Status CheckOrtBuildConfig(const std::string& value) const;
+  virtual std::string WriteOrtBuildConfig() const;
+
+ private:
+  CheckWriteFuncs validators_;
 };
 
 }  // namespace onnxruntime

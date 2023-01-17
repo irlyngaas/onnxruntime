@@ -20,6 +20,16 @@ namespace {
 // test on CPU and it does not use stream
 using StreamT = void*;
 
+class TestTuningResultsValidator : public TuningResultsValidator {
+ public:
+  TestTuningResultsValidator() = default;
+
+ protected:
+  std::string WriteOrtBuildConfig() const override {
+    return "TEST_BUILD";
+  }
+};
+
 class TestTuningContext : public ITuningContext {
  public:
   void EnableTunableOp() override { tuning_enabled_ = true; }
@@ -29,9 +39,13 @@ class TestTuningContext : public ITuningContext {
   TuningResultsManager& GetTuningResultsManager() override { return manager_; }
   const TuningResultsManager& GetTuningResultsManager() const override { return manager_; }
 
+  // For validating tuning results .
+  const TuningResultsValidator& GetTuningResultsValidator() const override { return validator_; }
+
  private:
   bool tuning_enabled_{false};
   TuningResultsManager manager_{};
+  TestTuningResultsValidator validator_{};
 };
 
 class TestEP : public IExecutionProvider {
