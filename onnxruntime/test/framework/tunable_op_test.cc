@@ -32,6 +32,8 @@ class TestTuningResultsValidator : public TuningResultsValidator {
 
 class TestTuningContext : public ITuningContext {
  public:
+  using ITuningContext::ITuningContext;
+
   void EnableTunableOp() override { tuning_enabled_ = true; }
   void DisableTunableOp() override { tuning_enabled_ = false; }
   bool IsTunableOpEnabled() const override { return tuning_enabled_; }
@@ -50,7 +52,7 @@ class TestTuningContext : public ITuningContext {
 
 class TestEP : public IExecutionProvider {
   static constexpr const char* kEPType = "TestEP";
-  TestTuningContext tuning_ctx_{};
+  TestTuningContext tuning_ctx_{this};
 
  public:
   TestEP() : IExecutionProvider{kEPType, true} {}

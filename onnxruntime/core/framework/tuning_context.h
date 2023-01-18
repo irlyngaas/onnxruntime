@@ -17,6 +17,7 @@ class TuningResultsValidator;
 
 class ITuningContext {
  public:
+  explicit ITuningContext(IExecutionProvider* ep) : ep_(ep) {}
   virtual ~ITuningContext() = default;
 
   virtual void EnableTunableOp() = 0;
@@ -26,8 +27,13 @@ class ITuningContext {
   virtual TuningResultsManager& GetTuningResultsManager() = 0;
   virtual const TuningResultsManager& GetTuningResultsManager() const = 0;
 
-  // For validating tuning results .
   virtual const TuningResultsValidator& GetTuningResultsValidator() const = 0;
+
+  virtual TuningResults SaveTuningResults() const;
+  virtual Status LoadTuningResults(const TuningResults& tr);
+
+ protected:
+  IExecutionProvider* ep_;
 };
 
 class TuningResultsManager {

@@ -46,7 +46,8 @@ CudaTuningResultsValidator::CudaTuningResultsValidator(CUDAExecutionProvider* ep
       [this]() { return WriteDeviceModel(); });
 }
 
-CudaTuningContext::CudaTuningContext(CUDAExecutionProvider* ep, TunableOpInfo* info) : info_(info), validator_(ep) {}
+CudaTuningContext::CudaTuningContext(CUDAExecutionProvider* ep, TunableOpInfo* info)
+    : ITuningContext(ep), info_(info), validator_(ep) {}
 
 void CudaTuningContext::EnableTunableOp() {
   LOGS_DEFAULT(INFO) << "Enable TunableOp for CUDA Execution Provider";

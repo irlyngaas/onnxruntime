@@ -21,6 +21,21 @@
 
 namespace onnxruntime {
 
+TuningResults ITuningContext::SaveTuningResults() const {
+  TuningResults tr;
+  tr.ep = ep_->Type();
+  tr.validators = GetTuningResultsValidator().WriteAll();
+  tr.results = GetTuningResultsManager().Dump();
+  return tr;
+}
+
+Status ITuningContext::LoadTuningResults(const TuningResults& tr) {
+  ORT_RETURN_IF(tr.ep != ep_->Type(), "EP mismatch");
+  ORT_RETURN_IF_ERROR(GetTuningResultsValidator().CheckAll(tr.validators));
+  GetTuningResultsManager().Load(tr.results);
+  return Status::OK();
+}
+
 KernelMap TuningResultsManager::Lookup(const std::string& op_signature) const {
   std::scoped_lock l{lock_};
   auto it = results_.find(op_signature);
@@ -110,28 +125,29 @@ void TuningResultsManager::Clear() {
   results_ = {};
 }
 
-bool CheckMandatoryKeys(
+Status CheckMandatoryKeys(
     const TuningResultsValidator::CheckWriteFuncs& check_write_funcs,
     const std::unordered_map<std::string, std::string>& to_check) {
   constexpr const std::array mandatory_keys{"ORT_VERSION", "ORT_GIT_COMMIT", "ORT_BUILD_CONFIG"};
 
   bool passed = true;
+  std::ostringstream oss;
   for (const auto& k : mandatory_keys) {
     if (check_write_funcs.find(k) == check_write_funcs.end()) {
       passed = false;
-      LOGS_DEFAULT(ERROR) << "key=\"" << k << "\" is not registered for Check and Write.";
+      oss << "key=\"" << k << "\" is not registered for Check and Write. ";
     }
 
     if (to_check.find(k) == to_check.end()) {
       passed = false;
-      LOGS_DEFAULT(ERROR) << "key=\"" << k << "\" is not provided for validation.";
+      oss << "key=\"" << k << "\" is not provided for validation. ";
     }
   }
-
-  return passed;
+  ORT_RETURN_IF(!passed, oss.str());
+  return Status::OK();
 }
 
-bool CheckKeysMatching(
+Status CheckKeysMatching(
     const TuningResultsValidator::CheckWriteFuncs& cw_funcs,
     const std::unordered_map<std::string, std::string>& to_check) {
   auto get_keys = [](const auto& it) -> std::string { return it.first; };
@@ -145,12 +161,12 @@ bool CheckKeysMatching(
                         provided_keys.cbegin(), provided_keys.cend(),
                         std::inserter(intersection, intersection.end()));
   bool matched = true;
+  std::ostringstream oss;
   if (intersection.size() != required_keys.size()) {
     matched = false;
     for (const auto& k : required_keys) {
       if (intersection.find(k) == intersection.end()) {
-        LOGS_DEFAULT(ERROR)
-            << "Unmatched validator: \"" << k << "\" is required, but the tuning results does not provide it.";
+        oss << "Unmatched validator: \"" << k << "\" is required, but the tuning results does not provide it. ";
       }
     }
   }
@@ -158,13 +174,12 @@ bool CheckKeysMatching(
     matched = false;
     for (const auto& k : provided_keys) {
       if (intersection.find(k) == intersection.end()) {
-        LOGS_DEFAULT(ERROR)
-            << "Unmatched validator: \"" << k << "\" is provided, but onnxruntime is unable to consume it.";
+        oss << "Unmatched validator: \"" << k << "\" is provided, but onnxruntime is unable to consume it. ";
       }
     }
   }
-
-  return matched;
+  ORT_RETURN_IF(!matched, oss.str());
+  return Status::OK();
 }
 
 Status TuningResultsValidator::CheckOrtVersion(const std::string& value) const {
@@ -217,10 +232,8 @@ TuningResultsValidator::TuningResultsValidator() {
 }
 
 Status TuningResultsValidator::CheckAll(const std::unordered_map<std::string, std::string>& to_check) const {
-  bool have_mandatory_keys = CheckMandatoryKeys(validators_, to_check);
-  bool key_matched = CheckKeysMatching(validators_, to_check);
-  ORT_RETURN_IF(!have_mandatory_keys || !key_matched,
-                "An error occurs during the loading of tuning results. Check logs for more details.");
+  ORT_RETURN_IF_ERROR(CheckMandatoryKeys(validators_, to_check));
+  ORT_RETURN_IF_ERROR(CheckKeysMatching(validators_, to_check));
 
   for (const auto& [key, value] : to_check) {
     const auto& it = validators_.find(key);

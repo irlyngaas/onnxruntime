@@ -2181,6 +2181,44 @@ const profiling::Profiler& InferenceSession::GetProfiling() const {
   return session_profiler_;
 }
 
+#if !defined(ORT_MINIMAL_BUILD)
+std::vector<TuningResults> InferenceSession::GetTuningResults() const {
+  std::vector<TuningResults> ret;
+  for (const auto& provider : execution_providers_) {
+    const auto* tuning_ctx = provider->GetTuningContext();
+    if (tuning_ctx != nullptr) {
+      ret.emplace_back(tuning_ctx->SaveTuningResults());
+    }
+  }
+  return ret;
+}
+
+Status InferenceSession::SetTuningResults(const std::vector<TuningResults>& trs, bool error_on_invalid) {
+  std::string msg;
+
+  for (size_t i = 0; i < trs.size(); i++) {
+    const auto& tr = trs[i];
+    auto* provider = execution_providers_.Get(tr.ep);
+    msg = MakeString("Cannot find execution provider ", tr.ep);
+    LOGS(*session_logger_, WARNING) << msg;
+    ORT_RETURN_IF(error_on_invalid && provider == nullptr, msg);
+
+    auto* tuning_ctx = provider->GetTuningContext();
+    msg = MakeString("Invalid TuningResults (index=", i, "). ", tr.ep, " does not support TunableOp.");
+    LOGS(*session_logger_, WARNING) << msg;
+    ORT_RETURN_IF(error_on_invalid && tuning_ctx == nullptr, msg);
+
+    auto status = tuning_ctx->LoadTuningResults(tr);
+    if (!status.IsOK()) {
+      msg = MakeString("Failed to load TuningResults (index=", i, "). Reason: ", status.ErrorMessage());
+      LOGS(*session_logger_, WARNING) << msg;
+      ORT_RETURN_IF(error_on_invalid, msg);
+    }
+  }
+  return Status::OK();
+}
+#endif  // !defined(ORT_MINIMAL_BUILD)
+
 AllocatorPtr InferenceSession::GetAllocator(const OrtMemoryInfo& mem_info) const {
   return session_state_->GetAllocator(mem_info);
 }
