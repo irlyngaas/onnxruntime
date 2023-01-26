@@ -89,6 +89,9 @@ namespace Dml
         {
             DML_EXECUTION_FLAGS executionFlags = GetExecutionFlags();
             ORT_THROW_IF_FAILED(m_dmlDevice->CompileOperator(dmlOperator.Get(), executionFlags, IID_PPV_ARGS(&m_compiledOperator)));
+            
+            // TODO: set name from ORT node name
+            ORT_THROW_IF_FAILED(m_compiledOperator->SetName(L"unknown name"));
 
             UINT64 persistentResourceSize = m_compiledOperator->GetBindingProperties().PersistentResourceSize;
             if (persistentResourceSize > 0)
