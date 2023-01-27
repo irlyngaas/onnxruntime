@@ -90,8 +90,10 @@ namespace Dml
             DML_EXECUTION_FLAGS executionFlags = GetExecutionFlags();
             ORT_THROW_IF_FAILED(m_dmlDevice->CompileOperator(dmlOperator.Get(), executionFlags, IID_PPV_ARGS(&m_compiledOperator)));
             
-            // TODO: set name from ORT node name
-            ORT_THROW_IF_FAILED(m_compiledOperator->SetName(L"unknown name"));
+            // Static buffer (might truncate name) to avoid excessive dynamic allocation only for debugging purposes.
+            wchar_t nodeName[512];
+            ORT_THROW_IF_FAILED(kernelInfo.GetInterfacePrivate()->GetWideName(sizeof(nodeName), nodeName));
+            ORT_THROW_IF_FAILED(m_compiledOperator->SetName(nodeName);
 
             UINT64 persistentResourceSize = m_compiledOperator->GetBindingProperties().PersistentResourceSize;
             if (persistentResourceSize > 0)
