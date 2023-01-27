@@ -982,14 +982,14 @@ namespace Windows::AI::MachineLearning::Adapter
         m_abiExecutionObject.CopyTo(executionInterface);
     }
 
-    uint32_t STDMETHODCALLTYPE GetUtf8NameSizeInBytes() const noexcept override
+    uint32_t STDMETHODCALLTYPE OpKernelInfoWrapper::GetUtf8NameSizeInBytes() const noexcept
     {
         // Include null terminator.
         const auto& name = m_impl->node().Name(); 
         return name.empty() ? 0 : name.size() + 1;
     }
 
-    HRESULT STDMETHODCALLTYPE GetUtf8Name(uint32_t bufferSizeInBytes, char* outputName) const noexcept override
+    HRESULT STDMETHODCALLTYPE OpKernelInfoWrapper::GetUtf8Name(uint32_t bufferSizeInBytes, char* outputName) const noexcept
     {
         if (bufferSizeInBytes == 0)
         {
@@ -1007,7 +1007,7 @@ namespace Windows::AI::MachineLearning::Adapter
         return S_OK;
     }
 
-    uint32_t STDMETHODCALLTYPE GetWideNameSizeInBytes() const noexcept override
+    uint32_t STDMETHODCALLTYPE OpKernelInfoWrapper::GetWideNameSizeInBytes() const noexcept
     {
         const auto& name = m_impl->node().Name(); 
         if (name.empty())
@@ -1022,7 +1022,7 @@ namespace Windows::AI::MachineLearning::Adapter
         return static_cast<uint32_t>(requiredSize) + 1;
     }
 
-    HRESULT STDMETHODCALLTYPE GetWideName(uint32_t bufferSizeInBytes, wchar_t* outputName) const noexcept override
+    HRESULT STDMETHODCALLTYPE OpKernelInfoWrapper::GetWideName(uint32_t bufferSizeInBytes, wchar_t* outputName) const noexcept
     {
         // Buffer needs to be large enough to at least hold a null terminator.
         if (bufferSizeInBytes < sizeof(wchar_t))
