@@ -44,6 +44,8 @@ class TestTuningContext : public ITuningContext {
   // For validating tuning results .
   const TuningResultsValidator& GetTuningResultsValidator() const override { return validator_; }
 
+  void ClearCache() { manager_.Clear(); }
+
  private:
   bool tuning_enabled_{false};
   TuningResultsManager manager_{};
@@ -61,6 +63,7 @@ class TestEP : public IExecutionProvider {
     return const_cast<TestTuningContext*>(&tuning_ctx_);
   }
 
+  void ClearCache() { tuning_ctx_.ClearCache(); }
 };
 
 class TestTimer : public ITimer<StreamT> {
