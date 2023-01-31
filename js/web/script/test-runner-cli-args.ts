@@ -322,7 +322,7 @@ function parseGlobalEnvFlags(args: minimist.ParsedArgs): Env {
   const wasmFlags = parseWasmFlags(args);
   const webglFlags = parseWebglFlags(args);
   const cpuFlags = parseCpuFlags(args);
-  return {webgl: webglFlags, wasm: wasmFlags, cpuFlags};
+  return {webgl: webglFlags, wasm: wasmFlags, webgpu: {}, ...cpuFlags};
 }
 
 export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs {
@@ -378,6 +378,7 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
     logConfig.push({category: 'Profiler.op', config: {minimalSeverity: 'verbose'}});
     logConfig.push({category: 'Profiler.backend', config: {minimalSeverity: 'verbose'}});
     globalEnvFlags.logLevel = 'verbose';
+    globalEnvFlags.webgpu.profilingMode = 'default';
   }
 
   // Option: -P[=<...>], --perf[=<...>]

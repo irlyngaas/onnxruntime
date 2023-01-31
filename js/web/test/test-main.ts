@@ -55,6 +55,9 @@ if (options.globalEnvFlags) {
     ort.env.wasm.initTimeout = flags.wasm.initTimeout;
   }
 }
+if (ORT_WEB_TEST_CONFIG.profile) {
+  ort.env.webgpu.profilingMode = 'default';
+}
 
 // Set logging configuration
 for (const logConfig of ORT_WEB_TEST_CONFIG.log) {

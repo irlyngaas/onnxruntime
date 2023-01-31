@@ -37,6 +37,10 @@ export class WebGpuBackend {
   computePassEncoder: GPUComputePassEncoder|null = null;
   pendingDispatchNumber = 0;
 
+  profilingEnabled = false;
+  profilingQuerySet: GPUQuerySet;
+  profilingTimeBase?: bigint;
+
   async initialize(): Promise<void> {
     if (!navigator.gpu) {
       // WebGPU is not available.
@@ -47,7 +51,20 @@ export class WebGpuBackend {
     if (!adapter) {
       throw new Error('WebGpuBackend: Failed to get GPU adapter.');
     }
-    this.device = await adapter.requestDevice();
+
+    const deviceDescriptor: GPUDeviceDescriptor = {
+      requiredLimits: {
+        maxComputeWorkgroupStorageSize: adapter.limits.maxComputeWorkgroupStorageSize,
+        maxComputeWorkgroupsPerDimension: adapter.limits.maxComputeWorkgroupsPerDimension,
+        maxStorageBufferBindingSize: adapter.limits.maxStorageBufferBindingSize,
+      }
+    };
+    if (adapter.features.has('timestamp-query') && env.webgpu.profilingMode === 'default') {
+      this.profilingEnabled = true;
+      deviceDescriptor.requiredFeatures = ['timestamp-query'];
+    }
+
+    this.device = await adapter.requestDevice(deviceDescriptor);
     this.gpuDataManager = createGpuDataManager(this);
     this.programManager = new ProgramManager(this);
     this.kernels = new Map();
@@ -60,6 +77,13 @@ export class WebGpuBackend {
         console.error(`An uncaught WebGPU validation error was raised: ${ev.error.message}`);
       }
     };
+
+    if (this.profilingEnabled) {
+      this.profilingQuerySet = this.device.createQuerySet({
+        type: 'timestamp',
+        count: 2,
+      });
+    }
   }
 
   dispose(): void {
