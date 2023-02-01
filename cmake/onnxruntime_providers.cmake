@@ -1455,6 +1455,7 @@ if (onnxruntime_USE_ROCM)
       device_gemm_add_fastgelu_instance
       device_gemm_fastgelu_instance
       device_batched_gemm_instance
+      device_softmax_instance
     )
     target_compile_definitions(onnxruntime_providers_rocm PRIVATE USE_COMPOSABLE_KERNEL)
   endif()
