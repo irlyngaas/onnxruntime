@@ -1,8 +1,10 @@
 import os
 import sys
 
-os.environ["KERNEL_EXPLORER_BUILD_DIR"] = "/home/guangyunhan/onnxruntime/build_rocm/Release"
-sys.path.insert(0, "/home/guangyunhan/onnxruntime/onnxruntime/python/tools/kernel_explorer/kernels")
+#os.environ["KERNEL_EXPLORER_BUILD_DIR"] = "/home/guangyunhan/onnxruntime/build_rocm/Release"
+#os.environ["KERNEL_EXPLORER_BUILD_DIR"] = "/gpfs/alpine/med106/world-shared/irl1/ckIntegration/onnxruntime/build_rocm54_7/Release"
+#sys.path.insert(0, "/home/guangyunhan/onnxruntime/onnxruntime/python/tools/kernel_explorer/kernels")
+#sys.path.insert(0, "/gpfs/alpine/med106/world-shared/irl1/ckIntegration/onnxruntime/python/tools/kernel_explorer/kernels")
 
 import kernel_explorer as ke
 import numpy as np
@@ -37,3 +39,4 @@ op.Run()
 dev_out.UpdateHostNumpyArray()
 
 diff = ref_out - out
+print(diff)

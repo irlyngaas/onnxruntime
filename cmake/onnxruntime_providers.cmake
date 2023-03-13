@@ -1340,11 +1340,6 @@ if (onnxruntime_USE_ROCM)
 
   # disable contrib ops conditionally
   if(NOT onnxruntime_DISABLE_CONTRIB_OPS)
-    if (NOT onnxruntime_ENABLE_ATEN)
-      list(REMOVE_ITEM onnxruntime_rocm_contrib_ops_cc_srcs
-        "${ONNXRUNTIME_ROOT}/contrib_ops/rocm/aten_ops/aten_op.cc"
-      )
-    endif()
 
     hipify("onnxruntime/contrib_ops" contrib_ops_excluded_files onnxruntime_rocm_generated_contrib_ops_cc_srcs onnxruntime_rocm_generated_contrib_ops_cu_srcs)
 
@@ -1444,6 +1439,7 @@ if (onnxruntime_USE_ROCM)
       # Currently we shall not use composablekernels::device_operations, the target includes all conv dependencies, which
       # are extremely slow to compile. Instead, we only link all gemm related objects. See the following link on updating.
       # https://github.com/ROCmSoftwarePlatform/composable_kernel/blob/85978e0201/library/src/tensor_operation_instance/gpu/CMakeLists.txt#L33-L54
+      device_batched_gemm_softmax_gemm_permute_instance
       device_gemm_instance
       device_gemm_add_fastgelu_instance
       device_gemm_fastgelu_instance
